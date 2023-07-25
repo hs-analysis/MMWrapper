@@ -1,0 +1,30 @@
+
+model_name : "mask2former_swin_t_seg"
+checkpoint_interval : 1
+keep_checkpoints : 1
+num_classes : 3
+in_channels : 3
+num_epochs : 100
+image_size : !!python/tuple [928, 928]
+val_interval : 1
+resume : None
+work_dir : "segmentationtest"
+load_from : null
+batch_size : 2
+pretained : False
+persistent_workers : False
+num_workers : 0
+classes : !!python/tuple ["0", "1", "2"]
+dataroot : "C:/HSA/HSA-Data/projects/5cddad40-830e-4b29-a2f8-e986deba7fcd/dataset/"
+
+train_img_prefix:
+  img_path: train/images
+  seg_map_path: train/labels
+
+val_img_prefix:
+  img_path: valid/images
+  seg_map_path: valid/labels
+
+test_img_prefix:
+  img_path: valid/images
+  seg_map_path: valid/labels
