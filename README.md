@@ -1,8 +1,11 @@
 # MMWrapper
 Wrapper around the openmmlab framework
 
-# Install
-## Pip
+## Install
+
+### Pip
+
+```bash
 pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu117
 pip install -U openmim
 mim install mmengine
