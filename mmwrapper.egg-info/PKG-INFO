@@ -1,0 +1,14 @@
+Metadata-Version: 2.1
+Name: mmwrapper
+Version: 0.1.0
+Summary: A wrapper module for mmdetection and mmsegmentation
+Home-page: https://github.com/PhilippMarquardt/MMWrapper
+Author: Philipp Marquardt
+Author-email: p.marquardt15@gmail.com
+Project-URL: Bug Reports, https://github.com/PhilippMarquardt/MMWrapper/issues
+Project-URL: Source, https://github.com/PhilippMarquardt/MMWrapper
+Keywords: mmwrapper wrapper module
+Requires-Python: >=3.6
+Description-Content-Type: text/markdown
+
+A wrapper module for mmdetection and mmsegmentation

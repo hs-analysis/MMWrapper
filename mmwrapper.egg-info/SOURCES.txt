@@ -1,0 +1,14 @@
+README.md
+setup.py
+mmwrapper.egg-info/PKG-INFO
+mmwrapper.egg-info/SOURCES.txt
+mmwrapper.egg-info/dependency_links.txt
+mmwrapper.egg-info/top_level.txt
+src/__init__.py
+src/api.py
+src/configs/__init__.py
+src/configs/configs.py
+src/configs/instance_segmentation/__init__.py
+src/configs/instance_segmentation/swin_l.py
+src/configs/instance_segmentation/swin_s.py
+src/configs/instance_segmentation/swin_t.py
