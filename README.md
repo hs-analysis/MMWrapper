@@ -12,3 +12,4 @@ mim install mmengine
 mim install "mmcv>=2.0.0"
 mim install mmdet
 pip install "mmsegmentation>=1.0.0"
+pip install git+https://github.com/PhilippMarquardt/MMWrapper.git
