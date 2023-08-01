@@ -1,4 +1,5 @@
 # MMWrapper
+This repo is unofficial and completely unassociated with the openmmlab projects
 Wrapper around the openmmlab framework
 
 ## Install
