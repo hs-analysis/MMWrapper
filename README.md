@@ -1,5 +1,5 @@
 # MMWrapper
-This repo is unofficial and completely unassociated with the openmmlab projects
+This repo is unofficial and completely unassociated with the openmmlab projects\
 
 It is just a wrapper around the mmdetection and mmsegmentation
 
