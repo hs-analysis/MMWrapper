@@ -1,6 +1,7 @@
 # MMWrapper
 This repo is unofficial and completely unassociated with the openmmlab projects
-Wrapper around the openmmlab framework
+
+It is just a wrapper around the mmdetection and mmsegmentation
 
 ## Install
 
