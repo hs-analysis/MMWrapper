@@ -25,13 +25,12 @@ def modify_config(cfg, dict_keys):
             if part in nested_dict:
                 nested_dict = nested_dict[part]
             else:
-                # Key not found, break the loop
-                nested_dict = None
-                break
+                # Key not found, create the nested key
+                nested_dict[part] = {}
+                nested_dict = nested_dict[part]
 
-        if nested_dict is not None and key_parts[-1] in nested_dict:
-            # Modify the value of the key
-            nested_dict[key_parts[-1]] = value
+        # Modify the value of the key (or create the key if it doesn't exist)
+        nested_dict[key_parts[-1]] = value
 
     return cfg
 
