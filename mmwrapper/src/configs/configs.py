@@ -385,12 +385,185 @@ def modify_dino_config(settings, cfg_path_end="dino_r50.py"):
             val_interval=1,
         ),
         "model.backbone.in_channels": settings["in_channels"],
-        "param_scheduler": dict(
-            type="CosineAnnealingLR",
-            by_epoch=True,
-            T_max=settings["num_epochs"],
-            convert_to_iter_based=True,
+        # "param_scheduler": dict(
+        #     type="CosineAnnealingLR",
+        #     by_epoch=True,
+        #     T_max=settings["num_epochs"],
+        #     convert_to_iter_based=True,
+        # ),
+        "log_processor": dict(type="LogProcessor", window_size=50, by_epoch=True),
+        "default_hooks": {
+            "timer": {"type": "IterTimerHook"},
+            "logger": {"type": "LoggerHook", "interval": 50},
+            "param_scheduler": {"type": "ParamSchedulerHook"},
+            "checkpoint": {
+                "type": "CheckpointHook",
+                "interval": settings["checkpoint_interval"],
+                "save_best": "auto",
+                "max_keep_ckpts": 1,
+            },
+            "sampler_seed": {"type": "DistSamplerSeedHook"},
+            "visualization": {"type": "DetVisualizationHook"},
+        },
+        # edit train pipeline
+        "train_dataloader.dataset.pipeline": train_pipeline,
+        "val_dataloader.dataset.pipeline": test_pipeline,
+        "test_dataloader.dataset.pipeline": test_pipeline,
+        # batch augment
+        "max_epochs": settings["num_epochs"],
+    }
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+
+    cfg = Config.fromfile(os.path.join(current_dir, f"object_detection/{cfg_path_end}"))
+    cfg = modify_config(cfg, swin_dict)
+    return cfg
+
+
+@ConfigModifierRegistry.register("dino_r50_custom_pipeline")
+def modify_dino_config(settings, cfg_path_end="dino_r50.py"):
+    train_pipeline = [
+        dict(type="LoadImageFromFile", to_float32=True, backend_args=None),
+        dict(type="LoadAnnotations", with_bbox=True),
+        dict(type="RandomFlip", prob=0.5),
+        dict(type="Resize", scale=settings["image_size"], keep_ratio=False),
+        dict(type="PackDetInputs"),
+    ]
+    test_pipeline = [
+        dict(type="LoadImageFromFile", to_float32=True, backend_args=None),
+        dict(type="Resize", scale=settings["image_size"], keep_ratio=False),
+        dict(type="LoadAnnotations", with_bbox=True),
+        dict(
+            type="PackDetInputs",
+            meta_keys=("img_id", "img_path", "ori_shape", "img_shape", "scale_factor"),
         ),
+    ]
+
+    # train_pipeline = [
+    #     dict(type="LoadImageFromFile", backend_args=None),
+    #     dict(type="LoadAnnotations", with_bbox=True),
+    #     dict(type="RandomFlip", prob=0.5),
+    #     dict(
+    #         type="RandomChoice",
+    #         transforms=[
+    #             [
+    #                 {
+    #                     "type": "RandomChoiceResize",
+    #                     "scales": [
+    #                         (480, 1333),
+    #                         (512, 1333),
+    #                         (544, 1333),
+    #                         (576, 1333),
+    #                         (608, 1333),
+    #                         (640, 1333),
+    #                         (672, 1333),
+    #                         (704, 1333),
+    #                         (736, 1333),
+    #                         (768, 1333),
+    #                         (800, 1333),
+    #                     ],
+    #                     "keep_ratio": True,
+    #                 }
+    #             ],
+    #             [
+    #                 {
+    #                     "type": "RandomChoiceResize",
+    #                     "scales": [(400, 4200), (500, 4200), (600, 4200)],
+    #                     "keep_ratio": True,
+    #                 },
+    #                 {
+    #                     "type": "RandomCrop",
+    #                     "crop_type": "absolute_range",
+    #                     "crop_size": (384, 600),
+    #                     "allow_negative_crop": True,
+    #                 },
+    #                 {
+    #                     "type": "RandomChoiceResize",
+    #                     "scales": [
+    #                         (480, 1333),
+    #                         (512, 1333),
+    #                         (544, 1333),
+    #                         (576, 1333),
+    #                         (608, 1333),
+    #                         (640, 1333),
+    #                         (672, 1333),
+    #                         (704, 1333),
+    #                         (736, 1333),
+    #                         (768, 1333),
+    #                         (800, 1333),
+    #                     ],
+    #                     "keep_ratio": True,
+    #                 },
+    #             ],
+    #         ],
+    #     ),
+    #     dict(type="PackDetInputs"),
+    # ]
+    # test_pipeline = [
+    #     dict(type="LoadImageFromFile", backend_args=None),
+    #     dict(type="Resize", scale=(1333, 800), keep_ratio=True),
+    #     dict(type="LoadAnnotations", with_bbox=True),
+    #     dict(
+    #         type="PackDetInputs",
+    #         meta_keys=("img_id", "img_path", "ori_shape", "img_shape", "scale_factor"),
+    #     ),
+    # ]
+    vis_backends = [
+        dict(type="LocalVisBackend"),  #
+        dict(type="TensorboardVisBackend"),
+    ]
+    visualizer = dict(
+        type="DetLocalVisualizer",
+        vis_backends=vis_backends,
+        name="visualizer",
+    )
+    swin_dict = {
+        "vis_backends": vis_backends,
+        "visualizer": visualizer,
+        "work_dir": settings["work_dir"],
+        "load_from": settings["load_from"],
+        "num_classes": settings["num_classes"],
+        "data_root": settings["dataroot"],
+        # image_size
+        "model.bbox_head.num_classes": settings["num_classes"],
+        "train_dataloader.num_workers": settings["num_workers"],
+        "train_dataloader.persistent_workers": settings["persistent_workers"],
+        "train_dataloader.batch_size": settings["batch_size"],
+        "train_dataloader.dataset.data_root": settings["dataroot"],
+        "train_dataloader.dataset.ann_file": settings["train_ann_file"],
+        "train_dataloader.dataset.data_prefix": settings["train_img_prefix"],
+        "train_dataloader.dataset.metainfo": dict(classes=settings["classes"]),
+        "val_dataloader.num_workers": settings["num_workers"],
+        "val_dataloader.persistent_workers": settings["persistent_workers"],
+        "val_dataloader.batch_size": settings["batch_size"],
+        "val_dataloader.dataset.data_root": settings["dataroot"],
+        "val_dataloader.dataset.ann_file": settings["val_ann_file"],
+        "val_dataloader.dataset.data_prefix": settings["val_img_prefix"],
+        "val_dataloader.dataset.metainfo": dict(classes=settings["classes"]),
+        "test_dataloader.num_workers": settings["num_workers"],
+        "test_dataloader.persistent_workers": settings["persistent_workers"],
+        "test_dataloader.batch_size": settings["batch_size"],
+        "test_dataloader.dataset.data_root": settings["dataroot"],
+        "test_dataloader.dataset.ann_file": settings["test_ann_file"],
+        "test_dataloader.dataset.data_prefix": settings["test_img_prefix"],
+        "test_dataloader.dataset.metainfo": dict(classes=settings["classes"]),
+        "val_evaluator.ann_file": os.path.join(
+            settings["dataroot"], settings["val_ann_file"]
+        ),
+        "test_evaluator.ann_file": os.path.join(
+            settings["dataroot"], settings["test_ann_file"]
+        ),
+        "train_cfg": dict(
+            type="EpochBasedTrainLoop",
+            max_epochs=settings["num_epochs"],
+            val_interval=1,
+        ),
+        "model.backbone.in_channels": settings["in_channels"],
+        # "param_scheduler": dict(
+        #     type="CosineAnnealingLR",
+        #     by_epoch=True,
+        #     T_max=settings["num_epochs"],
+        #     convert_to_iter_based=True,
+        # ),
         "log_processor": dict(type="LogProcessor", window_size=50, by_epoch=True),
         "default_hooks": {
             "timer": {"type": "IterTimerHook"},

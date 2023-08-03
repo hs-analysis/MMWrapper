@@ -333,6 +333,6 @@ test_cfg = dict(type="TestLoop")
 param_scheduler = [
     dict(type="MultiStepLR", begin=0, end=12, by_epoch=True, milestones=[11], gamma=0.1)
 ]
-auto_scale_lr = dict(base_batch_size=16)
+auto_scale_lr = dict(base_batch_size=2)
 launcher = "none"
 work_dir = "dino/"

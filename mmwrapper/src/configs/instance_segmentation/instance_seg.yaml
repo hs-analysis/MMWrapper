@@ -15,18 +15,18 @@ pretained : False
 persistent_workers : False
 num_workers : 0
 classes : !!python/tuple ["0"]
-dataroot : "C:/Users/philmarq/Downloads/dataset/"
-train_ann_file : "train_test.json"
+dataroot : "C:/HSA/HSA-Data/projects/d55090aa-a315-4ae3-8242-b50e13e355f6/dataset/"
+train_ann_file : "annotations/instances_train2017.json"
 train_img_prefix:
   img: train2017/
   seg: annotations/panoptic_train2017/
 
-val_ann_file : "train_test.json"
+val_ann_file : "annotations/instances_val2017.json"
 val_img_prefix:
-  img: train2017/
+  img: val2017/
   seg: annotations/panoptic_val2017/
 
-test_ann_file : "train_test.json"
+test_ann_file : "annotations/instances_val2017.json"
 test_img_prefix:
-  img: train2017/
+  img: val2017/
   seg: annotations/panoptic_val2017/
