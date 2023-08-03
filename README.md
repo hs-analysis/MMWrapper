@@ -1,5 +1,7 @@
 # MMWrapper
-Wrapper around the openmmlab framework
+This repo is unofficial and completely unassociated with the openmmlab projects\
+
+It is just a wrapper around the mmdetection and mmsegmentation
 
 ## Install
 
@@ -12,3 +14,4 @@ mim install mmengine
 mim install "mmcv>=2.0.0"
 mim install mmdet
 pip install "mmsegmentation>=1.0.0"
+pip install git+https://github.com/PhilippMarquardt/MMWrapper.git
