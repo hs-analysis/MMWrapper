@@ -15,7 +15,7 @@ pretained : False
 persistent_workers : False
 num_workers : 0
 classes : !!python/tuple ["0"]
-dataroot : "C:\Users\philmarq\Downloads\dataset/"
+dataroot : "C:/Users/philmarq/Downloads/dataset/"
 train_ann_file : "train_test.json"
 train_img_prefix:
   img: train2017/
