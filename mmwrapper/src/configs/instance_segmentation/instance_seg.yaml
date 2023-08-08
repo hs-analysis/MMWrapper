@@ -2,20 +2,20 @@
 model_name : "mask2former_swin_s"
 checkpoint_interval : 1
 keep_checkpoints : 1
-num_classes : 1
+num_classes : 3
 in_channels : 3
 num_epochs : 50
 image_size : !!python/tuple [1024, 1024]
 val_interval : 1
 resume : None
-work_dir : "firstapitest"
+work_dir : "megdata"
 load_from : "C:/Users/philmarq/Downloads/mask2former_swin-s-p4-w7-224_8xb2-lsj-50e_coco_20220504_001756-c9d0c4f2.pth"
-batch_size : 2
+batch_size : 1
 pretained : False
 persistent_workers : False
 num_workers : 0
-classes : !!python/tuple ["0"]
-dataroot : "C:/HSA/HSA-Data/projects/d55090aa-a315-4ae3-8242-b50e13e355f6/dataset/"
+classes : !!python/tuple ["0", "1", "2"]
+dataroot : "C:/HSA/HSA-Data/projects/0c5220fa-7e4a-40a5-a7e5-7ac6eba0f34b/dataset/"
 train_ann_file : "annotations/instances_train2017.json"
 train_img_prefix:
   img: train2017/
