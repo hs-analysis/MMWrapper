@@ -2,10 +2,10 @@
 model_name : "mask2former_swin_s"
 checkpoint_interval : 1
 keep_checkpoints : 1
-num_classes : 3
+num_classes : 1
 in_channels : 3
 num_epochs : 50
-image_size : !!python/tuple [1024, 1024]
+image_size : !!python/tuple [512, 512]
 val_interval : 1
 resume : None
 work_dir : "megdata"
@@ -14,19 +14,19 @@ batch_size : 1
 pretained : False
 persistent_workers : False
 num_workers : 0
-classes : !!python/tuple ["0", "1", "2"]
-dataroot : "C:/HSA/HSA-Data/projects/0c5220fa-7e4a-40a5-a7e5-7ac6eba0f34b/dataset/"
-train_ann_file : "annotations/instances_train2017.json"
+classes : !!python/tuple ["0"]
+dataroot : "C:/Users/philmarq/Downloads/dataset/dataset/"
+train_ann_file : "valid.json"
 train_img_prefix:
-  img: train2017/
+  img: images/
   seg: annotations/panoptic_train2017/
 
-val_ann_file : "annotations/instances_val2017.json"
+val_ann_file : "valid.json"
 val_img_prefix:
-  img: val2017/
+  img: images/
   seg: annotations/panoptic_val2017/
 
-test_ann_file : "annotations/instances_val2017.json"
+test_ann_file : "valid.json"
 test_img_prefix:
-  img: val2017/
+  img: images/
   seg: annotations/panoptic_val2017/
