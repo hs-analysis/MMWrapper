@@ -1,21 +1,22 @@
 
-model_name : "dino_r50_custom_pipeline"
+model_name : "dino_r50"
 checkpoint_interval : 1
 keep_checkpoints : 1
-num_classes : 1
+num_classes : 4
 in_channels : 3
 num_epochs : 50
-image_size : !!python/tuple [2048, 2048]
+image_size : !!python/tuple [512, 512]
 val_interval : 1
+backend: "cv2"
 resume : None
 work_dir : "firstapitest"
 load_from : "https://download.openmmlab.com/mmdetection/v3.0/dino/dino-4scale_r50_8xb2-12e_coco/dino-4scale_r50_8xb2-12e_coco_20221202_182705-55b2bba2.pth"
 batch_size : 1
-pretained : False
+pretrained : False
 persistent_workers : False
 num_workers : 0
-classes : !!python/tuple ["0"]
-dataroot : "C:/HSA/HSA-Data/projects/d55090aa-a315-4ae3-8242-b50e13e355f6/dataset/"
+classes : !!python/tuple ["0", "1", "2", "3"]
+dataroot : "C:/HSA/HSA-Data/projects/074219d0-4345-4896-a335-288f9c7a92ba/dataset/"
 train_ann_file : "annotations/instances_train2017.json"
 train_img_prefix:
   img: train2017/
