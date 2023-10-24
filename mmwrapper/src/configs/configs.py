@@ -107,6 +107,7 @@ def modfiy_swin_upper_segmentation(settings, cfg_path_end="swin_s_upper.py"):
         "load_from": settings["load_from"],
         "num_classes": settings["num_classes"],
         "data_root": settings["dataroot"],
+        "log_level": "ERROR",
         # image_size
         "model.decode_head.num_classes": settings["num_classes"],
         "model.auxiliary_head.num_classes": settings["num_classes"],
@@ -238,6 +239,7 @@ def modfiy_mask2former_r50_config(settings, cfg_path_end="mask2former_r50.py"):
         "load_from": settings["load_from"],
         "num_classes": settings["num_classes"],
         "data_root": settings["dataroot"],
+        "log_level": "ERROR",
         # image_size
         # "model.decode_head.num_classes": settings["num_classes"],
         # "model.auxiliary_head.num_classes": settings["num_classes"],
@@ -405,6 +407,7 @@ def modify_dino_config(settings, cfg_path_end="dino_r50.py"):
         "load_from": settings["load_from"],
         "num_classes": settings["num_classes"],
         "data_root": settings["dataroot"],
+        "log_level": "ERROR",
         # image_size
         "model.data_preprocessor": data_preprocessor,
         "model.bbox_head.num_classes": settings["num_classes"],
@@ -580,6 +583,7 @@ def modify_dino_config(settings, cfg_path_end="dino_r50.py"):
         "load_from": settings["load_from"],
         "num_classes": settings["num_classes"],
         "data_root": settings["dataroot"],
+        "log_level": "ERROR",
         # image_size
         "model.bbox_head.num_classes": settings["num_classes"],
         "train_dataloader.num_workers": settings["num_workers"],
@@ -728,6 +732,7 @@ def modify_mask2former_config(settings, cfg_path_end="swin_l.py"):
         "visualizer": visualizer,
         "work_dir": settings["work_dir"],
         "load_from": settings["load_from"],
+        "log_level": "ERROR",
         # image_size
         "num_classes": settings["num_classes"],
         "data_root": settings["dataroot"],
