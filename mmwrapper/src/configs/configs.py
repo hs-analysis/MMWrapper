@@ -1,5 +1,6 @@
 from mmengine.config import Config, DictAction
 import os
+import datetime
 
 
 class ConfigModifierRegistry:
@@ -75,7 +76,7 @@ def modfiy_swin_upper_segmentation(settings, cfg_path_end="swin_s_upper.py"):
     visualizer = dict(
         type="SegLocalVisualizer",
         vis_backends=vis_backends,
-        name="visualizer",
+        name="visualizer-" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S"),
     )
     tta_pipeline = [
         dict(type="LoadImageFromFile", backend_args=None, imdecode_backend=backend),
@@ -230,7 +231,7 @@ def modfiy_mask2former_r50_config(settings, cfg_path_end="mask2former_r50.py"):
     visualizer = dict(
         type="SegLocalVisualizer",
         vis_backends=vis_backends,
-        name="visualizer",
+        name="visualizer-" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S"),
     )
     swin_dict = {
         "vis_backends": vis_backends,
@@ -398,7 +399,7 @@ def modify_dino_config(settings, cfg_path_end="dino_r50.py"):
     visualizer = dict(
         type="DetLocalVisualizer",
         vis_backends=vis_backends,
-        name="visualizer",
+        name="visualizer-" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S"),
     )
     swin_dict = {
         "vis_backends": vis_backends,
@@ -574,7 +575,7 @@ def modify_dino_config(settings, cfg_path_end="dino_r50.py"):
     visualizer = dict(
         type="DetLocalVisualizer",
         vis_backends=vis_backends,
-        name="visualizer",
+        name="visualizer-" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S"),
     )
     swin_dict = {
         "vis_backends": vis_backends,
@@ -725,7 +726,7 @@ def modify_mask2former_config(settings, cfg_path_end="swin_l.py"):
     visualizer = dict(
         type="DetLocalVisualizer",
         vis_backends=vis_backends,
-        name="visualizer",
+        name="visualizer-" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S"),
     )
     swin_dict = {
         "vis_backends": vis_backends,
