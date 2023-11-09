@@ -1,21 +1,22 @@
 
-model_name : "mask2former_swin_t_seg"
+model_name : "swin_s_upper"
 checkpoint_interval : 1
 keep_checkpoints : 1
-num_classes : 3
+num_classes : 4
 in_channels : 3
-num_epochs : 100
+num_epochs : 5000
+backend: "cv2"
 image_size : !!python/tuple [512, 512]
 val_interval : 1
 resume : None
-work_dir : "segmentationtest"
-load_from : "https://download.openmmlab.com/mmsegmentation/v0.5/mask2former/mask2former_swin-t_8xb2-160k_ade20k-512x512/mask2former_swin-t_8xb2-160k_ade20k-512x512_20221203_234230-7d64e5dd.pth"
+work_dir : "swinunetblitze"
+load_from : Null
 batch_size : 2
-pretained : False
+pretrained : True
 persistent_workers : False
 num_workers : 0
-classes : !!python/tuple ["0", "1", "2"]
-dataroot : "C:/HSA/HSA-Data/projects/0fdb47d1-c3cd-4937-9df1-c75eb3b991b2/test_dataset/"
+classes : !!python/tuple ["0", "1", "2", "3"]
+dataroot : "C:/HSA/HSA-Data/projects/49398886-fba3-41cf-b016-dcfd8ac6654e/dataset/"
 
 train_img_prefix:
   img_path: train/images

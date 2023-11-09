@@ -1,5 +1,6 @@
 from mmengine.config import Config, DictAction
 import os
+import datetime
 
 
 class ConfigModifierRegistry:
@@ -35,11 +36,17 @@ def modify_config(cfg, dict_keys):
     return cfg
 
 
-@ConfigModifierRegistry.register("swin_b_upper")
+@ConfigModifierRegistry.register("swin_unet")
+def modify_swin_unet(cfg, cfg_path_end="swin_unet.py"):
+    return modfiy_swin_upper_segmentation(cfg, cfg_path_end)
+
+
+@ConfigModifierRegistry.register("swin_s_upper")
 def modfiy_swin_upper_segmentation(settings, cfg_path_end="swin_s_upper.py"):
     assert settings["batch_size"] >= 2, "batch size must be >= 2"
+    backend = settings["backend"]
     train_pipeline = [
-        dict(type="LoadImageFromFile"),
+        dict(type="LoadImageFromFile", imdecode_backend=backend),
         dict(type="LoadAnnotations", reduce_zero_label=False),
         dict(type="Resize", scale=settings["image_size"], keep_ratio=False),
         dict(type="RandomFlip", prob=0.5),
@@ -47,7 +54,7 @@ def modfiy_swin_upper_segmentation(settings, cfg_path_end="swin_s_upper.py"):
         dict(type="PackSegInputs"),
     ]
     test_pipeline = [
-        dict(type="LoadImageFromFile"),
+        dict(type="LoadImageFromFile", imdecode_backend=backend),
         dict(type="Resize", scale=settings["image_size"], keep_ratio=False),
         dict(type="LoadAnnotations", reduce_zero_label=False),
         dict(type="PackSegInputs"),
@@ -55,9 +62,9 @@ def modfiy_swin_upper_segmentation(settings, cfg_path_end="swin_s_upper.py"):
 
     data_preprocessor = dict(
         type="SegDataPreProcessor",
-        mean=[123.675, 116.28, 103.53],
-        std=[58.395, 57.12, 57.375],
-        bgr_to_rgb=True,
+        mean=None if backend == "tifffile" else [123.675, 116.28, 103.53],
+        std=None if backend == "tifffile" else [58.395, 57.12, 57.375],
+        bgr_to_rgb=True if backend == "cv2" else False,
         pad_val=0,
         seg_pad_val=255,
         size=settings["image_size"],
@@ -69,8 +76,31 @@ def modfiy_swin_upper_segmentation(settings, cfg_path_end="swin_s_upper.py"):
     visualizer = dict(
         type="SegLocalVisualizer",
         vis_backends=vis_backends,
-        name="visualizer",
+        name="visualizer-" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S"),
     )
+    tta_pipeline = [
+        dict(type="LoadImageFromFile", backend_args=None, imdecode_backend=backend),
+        dict(
+            type="TestTimeAug",
+            transforms=[
+                [
+                    {"type": "Resize", "scale_factor": 0.5, "keep_ratio": True},
+                    {"type": "Resize", "scale_factor": 0.75, "keep_ratio": True},
+                    {"type": "Resize", "scale_factor": 1.0, "keep_ratio": True},
+                    {"type": "Resize", "scale_factor": 1.25, "keep_ratio": True},
+                    {"type": "Resize", "scale_factor": 1.5, "keep_ratio": True},
+                    {"type": "Resize", "scale_factor": 1.75, "keep_ratio": True},
+                ],
+                [
+                    {"type": "RandomFlip", "prob": 0.0, "direction": "horizontal"},
+                    {"type": "RandomFlip", "prob": 1.0, "direction": "horizontal"},
+                ],
+                [{"type": "LoadAnnotations"}],
+                [{"type": "PackSegInputs"}],
+            ],
+        ),
+    ]
+
     swin_dict = {
         "vis_backends": vis_backends,
         "visualizer": visualizer,
@@ -78,6 +108,7 @@ def modfiy_swin_upper_segmentation(settings, cfg_path_end="swin_s_upper.py"):
         "load_from": settings["load_from"],
         "num_classes": settings["num_classes"],
         "data_root": settings["dataroot"],
+        "log_level": "ERROR",
         # image_size
         "model.decode_head.num_classes": settings["num_classes"],
         "model.auxiliary_head.num_classes": settings["num_classes"],
@@ -90,24 +121,40 @@ def modfiy_swin_upper_segmentation(settings, cfg_path_end="swin_s_upper.py"):
         "train_dataloader.dataset.reduce_zero_label": False,
         "train_dataloader.sampler": dict(type="DefaultSampler", shuffle=True),
         "train_dataloader.drop_last": True,
+        "train_dataloader.dataset.img_suffix": ".tif"
+        if backend == "tifffile"
+        else ".png",
         "val_dataloader.num_workers": settings["num_workers"],
         "val_dataloader.persistent_workers": settings["persistent_workers"],
         "val_dataloader.batch_size": 1,
         "val_dataloader.dataset.data_root": settings["dataroot"],
         "val_dataloader.dataset.data_prefix": settings["val_img_prefix"],
         "val_dataloader.dataset.metainfo": dict(classes=settings["classes"]),
+        "val_dataloader.dataset.img_suffix": ".tif"
+        if backend == "tifffile"
+        else ".png",
         "test_dataloader.num_workers": settings["num_workers"],
         "test_dataloader.persistent_workers": settings["persistent_workers"],
         "test_dataloader.batch_size": 1,
         "test_dataloader.dataset.data_root": settings["dataroot"],
         "test_dataloader.dataset.data_prefix": settings["test_img_prefix"],
         "test_dataloader.dataset.metainfo": dict(classes=settings["classes"]),
+        "test_dataloader.dataset.img_suffix": ".tif"
+        if backend == "tifffile"
+        else ".png",
+        "tta_pipeline": tta_pipeline,
         "train_cfg": dict(
             type="EpochBasedTrainLoop",
             max_epochs=settings["num_epochs"],
             val_interval=1,
         ),
         "model.backbone.in_channels": settings["in_channels"],
+        "model.backbone.init_cfg": dict(
+            type="Pretrained",
+            checkpoint="https://download.openmmlab.com/mmsegmentation/v0.5/pretrain/swin/swin_tiny_patch4_window7_224_20220317-1cdeb081.pth",
+        )
+        if settings["pretrained"]
+        else None,
         "model.data_preprocessor": data_preprocessor,
         "param_scheduler": dict(
             type="CosineAnnealingLR",
@@ -184,7 +231,7 @@ def modfiy_mask2former_r50_config(settings, cfg_path_end="mask2former_r50.py"):
     visualizer = dict(
         type="SegLocalVisualizer",
         vis_backends=vis_backends,
-        name="visualizer",
+        name="visualizer-" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S"),
     )
     swin_dict = {
         "vis_backends": vis_backends,
@@ -193,6 +240,7 @@ def modfiy_mask2former_r50_config(settings, cfg_path_end="mask2former_r50.py"):
         "load_from": settings["load_from"],
         "num_classes": settings["num_classes"],
         "data_root": settings["dataroot"],
+        "log_level": "ERROR",
         # image_size
         # "model.decode_head.num_classes": settings["num_classes"],
         # "model.auxiliary_head.num_classes": settings["num_classes"],
@@ -264,9 +312,19 @@ def modfiy_mask2former_r50_config(settings, cfg_path_end="mask2former_r50.py"):
 
 @ConfigModifierRegistry.register("dino_r50")
 def modify_dino_config(settings, cfg_path_end="dino_r50.py"):
+    backend = settings["backend"]
+
+    init_cfg = None  # TODO: add init_cfg
+    data_preprocessor = dict(
+        type="DetDataPreprocessor",
+        mean=[123.675, 116.28, 103.53] if backend != "tifffile" else None,
+        std=[123.675, 116.28, 103.53] if backend != "tifffile" else None,
+        bgr_to_rgb=True if backend != "tifffile" else False,
+        pad_size_divisor=1,
+    )
 
     train_pipeline = [
-        dict(type="LoadImageFromFile", backend_args=None),
+        dict(type="LoadImageFromFile", backend_args=None, imdecode_backend=backend),
         dict(type="LoadAnnotations", with_bbox=True),
         dict(type="RandomFlip", prob=0.5),
         dict(
@@ -326,7 +384,7 @@ def modify_dino_config(settings, cfg_path_end="dino_r50.py"):
         dict(type="PackDetInputs"),
     ]
     test_pipeline = [
-        dict(type="LoadImageFromFile", backend_args=None),
+        dict(type="LoadImageFromFile", backend_args=None, imdecode_backend=backend),
         dict(type="Resize", scale=(1333, 800), keep_ratio=True),
         dict(type="LoadAnnotations", with_bbox=True),
         dict(
@@ -341,7 +399,7 @@ def modify_dino_config(settings, cfg_path_end="dino_r50.py"):
     visualizer = dict(
         type="DetLocalVisualizer",
         vis_backends=vis_backends,
-        name="visualizer",
+        name="visualizer-" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S"),
     )
     swin_dict = {
         "vis_backends": vis_backends,
@@ -350,7 +408,9 @@ def modify_dino_config(settings, cfg_path_end="dino_r50.py"):
         "load_from": settings["load_from"],
         "num_classes": settings["num_classes"],
         "data_root": settings["dataroot"],
+        "log_level": "ERROR",
         # image_size
+        "model.data_preprocessor": data_preprocessor,
         "model.bbox_head.num_classes": settings["num_classes"],
         "train_dataloader.num_workers": settings["num_workers"],
         "train_dataloader.persistent_workers": settings["persistent_workers"],
@@ -384,13 +444,14 @@ def modify_dino_config(settings, cfg_path_end="dino_r50.py"):
             max_epochs=settings["num_epochs"],
             val_interval=1,
         ),
+        "model.backbone.init_cfg": init_cfg,
         "model.backbone.in_channels": settings["in_channels"],
-        # "param_scheduler": dict(
-        #     type="CosineAnnealingLR",
-        #     by_epoch=True,
-        #     T_max=settings["num_epochs"],
-        #     convert_to_iter_based=True,
-        # ),
+        "param_scheduler": dict(
+            type="CosineAnnealingLR",
+            by_epoch=True,
+            T_max=settings["num_epochs"],
+            convert_to_iter_based=True,
+        ),
         "log_processor": dict(type="LogProcessor", window_size=50, by_epoch=True),
         "default_hooks": {
             "timer": {"type": "IterTimerHook"},
@@ -514,7 +575,7 @@ def modify_dino_config(settings, cfg_path_end="dino_r50.py"):
     visualizer = dict(
         type="DetLocalVisualizer",
         vis_backends=vis_backends,
-        name="visualizer",
+        name="visualizer-" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S"),
     )
     swin_dict = {
         "vis_backends": vis_backends,
@@ -523,6 +584,7 @@ def modify_dino_config(settings, cfg_path_end="dino_r50.py"):
         "load_from": settings["load_from"],
         "num_classes": settings["num_classes"],
         "data_root": settings["dataroot"],
+        "log_level": "ERROR",
         # image_size
         "model.bbox_head.num_classes": settings["num_classes"],
         "train_dataloader.num_workers": settings["num_workers"],
@@ -602,10 +664,31 @@ def modify_mask2former_config(settings, cfg_path_end="swin_s.py"):
     return modify_mask2former_config(settings, cfg_path_end)
 
 
+@ConfigModifierRegistry.register("mask2former_resnet")
+def modify_mask2former_config(settings, cfg_path_end="swin_resnet.py"):
+    return modify_mask2former_config(settings, cfg_path_end)
+
+
 @ConfigModifierRegistry.register("mask2former_swin_l")
 def modify_mask2former_config(settings, cfg_path_end="swin_l.py"):
+
+    backend = settings["backend"]
+
+    data_preprocessor = dict(
+        type="DetDataPreprocessor",
+        mean=[123.675, 116.28, 103.53] if backend != "tifffile" else None,
+        std=[123.675, 116.28, 103.53] if backend != "tifffile" else None,
+        bgr_to_rgb=True if backend != "tifffile" else False,
+        pad_size_divisor=1,
+    )
+
     train_pipeline = [
-        dict(type="LoadImageFromFile", to_float32=True, backend_args=None),
+        dict(
+            type="LoadImageFromFile",
+            to_float32=True,
+            backend_args=None,
+            imdecode_backend=backend,
+        ),
         dict(type="LoadAnnotations", with_bbox=True, with_mask=True),
         dict(type="RandomFlip", prob=0.5),
         dict(type="Resize", scale=settings["image_size"], keep_ratio=False),
@@ -613,7 +696,12 @@ def modify_mask2former_config(settings, cfg_path_end="swin_l.py"):
         dict(type="PackDetInputs"),
     ]
     test_pipeline = [
-        dict(type="LoadImageFromFile", to_float32=True, backend_args=None),
+        dict(
+            type="LoadImageFromFile",
+            to_float32=True,
+            backend_args=None,
+            imdecode_backend=backend,
+        ),
         dict(type="Resize", scale=settings["image_size"], keep_ratio=False),
         dict(type="LoadAnnotations", with_bbox=True, with_mask=True),
         dict(
@@ -638,13 +726,14 @@ def modify_mask2former_config(settings, cfg_path_end="swin_l.py"):
     visualizer = dict(
         type="DetLocalVisualizer",
         vis_backends=vis_backends,
-        name="visualizer",
+        name="visualizer-" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S"),
     )
     swin_dict = {
         "vis_backends": vis_backends,
         "visualizer": visualizer,
         "work_dir": settings["work_dir"],
         "load_from": settings["load_from"],
+        "log_level": "ERROR",
         # image_size
         "num_classes": settings["num_classes"],
         "data_root": settings["dataroot"],
@@ -655,6 +744,7 @@ def modify_mask2former_config(settings, cfg_path_end="swin_l.py"):
         + [0.1],
         "model.panoptic_fusion_head.num_stuff_classes": 0,
         "model.panoptic_head.num_stuff_classes": 0,
+        "model.data_preprocessor": data_preprocessor,
         "num_stuff_classes": 0,
         "train_dataloader.num_workers": settings["num_workers"],
         "train_dataloader.persistent_workers": settings["persistent_workers"],
@@ -689,6 +779,7 @@ def modify_mask2former_config(settings, cfg_path_end="swin_l.py"):
             val_interval=settings["val_interval"],
         ),
         "model.backbone.in_channels": settings["in_channels"],
+        "model.backbone.init_cfg": None,
         "param_scheduler": dict(
             type="CosineAnnealingLR",
             by_epoch=True,

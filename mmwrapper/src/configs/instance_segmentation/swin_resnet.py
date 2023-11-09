@@ -2,7 +2,12 @@ dataset_type = "CocoDataset"
 data_root = "C:\\Users\\philmarq\\source\\repos\\mmdetlines\\annotations/"
 backend_args = None
 train_pipeline = [
-    dict(type="LoadImageFromFile", to_float32=True, backend_args=None),
+    dict(
+        type="LoadImageFromFile",
+        to_float32=True,
+        backend_args=None,
+        imdecode_backend="cv2",
+    ),
     dict(type="LoadAnnotations", with_bbox=True, with_mask=True),
     dict(type="RandomFlip", prob=0.5),
     dict(
@@ -23,7 +28,12 @@ train_pipeline = [
     dict(type="PackDetInputs"),
 ]
 test_pipeline = [
-    dict(type="LoadImageFromFile", to_float32=True, backend_args=None),
+    dict(
+        type="LoadImageFromFile",
+        to_float32=True,
+        backend_args=None,
+        imdecode_backend="cv2",
+    ),
     dict(type="Resize", scale=(1333, 800), keep_ratio=True),
     dict(type="LoadAnnotations", with_bbox=True, with_mask=True),
     dict(
@@ -44,7 +54,12 @@ train_dataloader = dict(
         data_prefix=dict(img="train2024/", seg="annotations/panoptic_train2017/"),
         filter_cfg=dict(filter_empty_gt=True, min_size=32),
         pipeline=[
-            dict(type="LoadImageFromFile", to_float32=True, backend_args=None),
+            dict(
+                type="LoadImageFromFile",
+                to_float32=True,
+                backend_args=None,
+                imdecode_backend="cv2",
+            ),
             dict(type="LoadAnnotations", with_bbox=True, with_mask=True),
             dict(type="RandomFlip", prob=0.5),
             dict(
@@ -80,7 +95,12 @@ val_dataloader = dict(
         data_prefix=dict(img="train2017/", seg="annotations/panoptic_val2017/"),
         test_mode=True,
         pipeline=[
-            dict(type="LoadImageFromFile", to_float32=True, backend_args=None),
+            dict(
+                type="LoadImageFromFile",
+                to_float32=True,
+                backend_args=None,
+                imdecode_backend="cv2",
+            ),
             dict(type="Resize", scale=(1333, 800), keep_ratio=True),
             dict(type="LoadAnnotations", with_bbox=True, with_mask=True),
             dict(
@@ -110,7 +130,12 @@ test_dataloader = dict(
         data_prefix=dict(img="train2017/", seg="annotations/panoptic_val2017/"),
         test_mode=True,
         pipeline=[
-            dict(type="LoadImageFromFile", to_float32=True, backend_args=None),
+            dict(
+                type="LoadImageFromFile",
+                to_float32=True,
+                backend_args=None,
+                imdecode_backend="cv2",
+            ),
             dict(type="Resize", scale=(1333, 800), keep_ratio=True),
             dict(type="LoadAnnotations", with_bbox=True, with_mask=True),
             dict(
@@ -155,26 +180,19 @@ default_hooks = dict(
         save_best="auto",
     ),
     sampler_seed=dict(type="DistSamplerSeedHook"),
-    visualization=dict(  # user visualization of validation and test results
-        type="DetVisualizationHook", draw=True, interval=1, show=True
-    ),
+    visualization=dict(type="DetVisualizationHook"),
 )
-
 env_cfg = dict(
     cudnn_benchmark=False,
     mp_cfg=dict(mp_start_method="fork", opencv_num_threads=0),
     dist_cfg=dict(backend="nccl"),
 )
-vis_backends = [
-    dict(type="LocalVisBackend"),  #
-    dict(type="TensorboardVisBackend"),
-]
+vis_backends = [dict(type="LocalVisBackend")]
 visualizer = dict(
     type="DetLocalVisualizer",
-    vis_backends=vis_backends,
+    vis_backends=[dict(type="LocalVisBackend")],
     name="visualizer",
 )
-
 log_processor = dict(type="LogProcessor", window_size=50, by_epoch=False)
 log_level = "INFO"
 load_from = None
@@ -218,8 +236,8 @@ model = dict(
     type="Mask2Former",
     data_preprocessor=dict(
         type="DetDataPreprocessor",
-        mean=[123.675, 116.28, 103.53],
-        std=[58.395, 57.12, 57.375],
+        mean=None,
+        std=None,
         bgr_to_rgb=True,
         pad_size_divisor=32,
         pad_mask=True,
@@ -238,46 +256,35 @@ model = dict(
         ],
     ),
     backbone=dict(
-        type="SwinTransformer",
-        embed_dims=96,
-        depths=[2, 2, 18, 2],
-        num_heads=[3, 6, 12, 24],
-        window_size=7,
-        mlp_ratio=4,
-        qkv_bias=True,
-        qk_scale=None,
-        drop_rate=0.0,
-        attn_drop_rate=0.0,
-        drop_path_rate=0.3,
-        patch_norm=True,
+        type="ResNet",
+        depth=50,
+        num_stages=4,
         out_indices=(0, 1, 2, 3),
-        with_cp=False,
-        convert_weights=True,
         frozen_stages=-1,
-        init_cfg=dict(
-            type="Pretrained",
-            checkpoint="https://github.com/SwinTransformer/storage/releases/download/v1.0.0/swin_small_patch4_window7_224.pth",
-        ),
+        norm_cfg=dict(type="BN", requires_grad=False),
+        norm_eval=True,
+        style="pytorch",
+        init_cfg=dict(type="Pretrained", checkpoint="torchvision://resnet50"),
     ),
     panoptic_head=dict(
         type="Mask2FormerHead",
-        in_channels=[96, 192, 384, 768],
+        in_channels=[256, 512, 1024, 2048],  # pass to pixel_decoder inside
         strides=[4, 8, 16, 32],
         feat_channels=256,
         out_channels=256,
-        num_things_classes=1,
-        num_stuff_classes=0,
-        num_queries=300,
+        num_things_classes=num_things_classes,
+        num_stuff_classes=num_stuff_classes,
+        num_queries=100,
         num_transformer_feat_level=3,
         pixel_decoder=dict(
             type="MSDeformAttnPixelDecoder",
             num_outs=3,
             norm_cfg=dict(type="GN", num_groups=32),
             act_cfg=dict(type="ReLU"),
-            encoder=dict(
+            encoder=dict(  # DeformableDetrTransformerEncoder
                 num_layers=6,
-                layer_cfg=dict(
-                    self_attn_cfg=dict(
+                layer_cfg=dict(  # DeformableDetrTransformerEncoderLayer
+                    self_attn_cfg=dict(  # MultiScaleDeformableAttention
                         embed_dims=256,
                         num_heads=8,
                         num_levels=3,
@@ -363,7 +370,7 @@ model = dict(
         panoptic_on=False,
         semantic_on=False,
         instance_on=True,
-        max_per_image=300,
+        max_per_image=100,
         iou_thr=0.8,
         filter_low_score=True,
     ),
@@ -401,18 +408,6 @@ optim_wrapper = dict(
                 "backbone.stages.0.downsample.norm": dict(lr_mult=0.1, decay_mult=0.0),
                 "backbone.stages.1.downsample.norm": dict(lr_mult=0.1, decay_mult=0.0),
                 "backbone.stages.2.downsample.norm": dict(lr_mult=0.1, decay_mult=0.0),
-                "backbone.stages.2.blocks.6.norm": dict(lr_mult=0.1, decay_mult=0.0),
-                "backbone.stages.2.blocks.7.norm": dict(lr_mult=0.1, decay_mult=0.0),
-                "backbone.stages.2.blocks.8.norm": dict(lr_mult=0.1, decay_mult=0.0),
-                "backbone.stages.2.blocks.9.norm": dict(lr_mult=0.1, decay_mult=0.0),
-                "backbone.stages.2.blocks.10.norm": dict(lr_mult=0.1, decay_mult=0.0),
-                "backbone.stages.2.blocks.11.norm": dict(lr_mult=0.1, decay_mult=0.0),
-                "backbone.stages.2.blocks.12.norm": dict(lr_mult=0.1, decay_mult=0.0),
-                "backbone.stages.2.blocks.13.norm": dict(lr_mult=0.1, decay_mult=0.0),
-                "backbone.stages.2.blocks.14.norm": dict(lr_mult=0.1, decay_mult=0.0),
-                "backbone.stages.2.blocks.15.norm": dict(lr_mult=0.1, decay_mult=0.0),
-                "backbone.stages.2.blocks.16.norm": dict(lr_mult=0.1, decay_mult=0.0),
-                "backbone.stages.2.blocks.17.norm": dict(lr_mult=0.1, decay_mult=0.0),
             }
         ),
         norm_decay_mult=0.0,
@@ -430,12 +425,17 @@ param_scheduler = dict(
 )
 interval = 5000
 dynamic_intervals = [(120001, 120000)]
-train_cfg = dict(type="EpochBasedTrainLoop", max_epochs=12, val_interval=1)
+train_cfg = dict(
+    type="IterBasedTrainLoop",
+    max_iters=120000,
+    val_interval=5000,
+    dynamic_intervals=[(120001, 120000)],
+)
 val_cfg = dict(type="ValLoop")
 test_cfg = dict(type="TestLoop")
 auto_scale_lr = dict(enable=False, base_batch_size=16)
-pretrained = "https://github.com/SwinTransformer/storage/releases/download/v1.0.0/swin_small_patch4_window7_224.pth"
-depths = [2, 2, 18, 2]
+pretrained = "https://github.com/SwinTransformer/storage/releases/download/v1.0.0/swin_tiny_patch4_window7_224.pth"
+depths = [2, 2, 6, 2]
 backbone_norm_multi = dict(lr_mult=0.1, decay_mult=0.0)
 backbone_embed_multi = dict(lr_mult=0.1, decay_mult=0.0)
 custom_keys = dict(
@@ -463,19 +463,8 @@ custom_keys = dict(
         "backbone.stages.0.downsample.norm": dict(lr_mult=0.1, decay_mult=0.0),
         "backbone.stages.1.downsample.norm": dict(lr_mult=0.1, decay_mult=0.0),
         "backbone.stages.2.downsample.norm": dict(lr_mult=0.1, decay_mult=0.0),
-        "backbone.stages.2.blocks.6.norm": dict(lr_mult=0.1, decay_mult=0.0),
-        "backbone.stages.2.blocks.7.norm": dict(lr_mult=0.1, decay_mult=0.0),
-        "backbone.stages.2.blocks.8.norm": dict(lr_mult=0.1, decay_mult=0.0),
-        "backbone.stages.2.blocks.9.norm": dict(lr_mult=0.1, decay_mult=0.0),
-        "backbone.stages.2.blocks.10.norm": dict(lr_mult=0.1, decay_mult=0.0),
-        "backbone.stages.2.blocks.11.norm": dict(lr_mult=0.1, decay_mult=0.0),
-        "backbone.stages.2.blocks.12.norm": dict(lr_mult=0.1, decay_mult=0.0),
-        "backbone.stages.2.blocks.13.norm": dict(lr_mult=0.1, decay_mult=0.0),
-        "backbone.stages.2.blocks.14.norm": dict(lr_mult=0.1, decay_mult=0.0),
-        "backbone.stages.2.blocks.15.norm": dict(lr_mult=0.1, decay_mult=0.0),
-        "backbone.stages.2.blocks.16.norm": dict(lr_mult=0.1, decay_mult=0.0),
-        "backbone.stages.2.blocks.17.norm": dict(lr_mult=0.1, decay_mult=0.0),
     }
 )
 launcher = "none"
-work_dir = "swins/"
+work_dir = "swint/"
+my_custom_data = dict(type="MyCustomDataset", whatever="whatever")
