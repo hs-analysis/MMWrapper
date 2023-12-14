@@ -2,32 +2,32 @@
 model_name : "mask2former_swin_t"
 checkpoint_interval : 1
 keep_checkpoints : 1
-num_classes : 4
+num_classes : 3
 in_channels : 3
 backend: "cv2"
-num_epochs : 150
-image_size : !!python/tuple [768, 768]
+num_epochs : 300
+image_size : !!python/tuple [1024, 1024]
 val_interval : 1
 resume : None
-work_dir : "alltogether_512_trainedon768"
-load_from : "C:/Users/philmarq/Downloads/mask2former_swin-s-p4-w7-224_8xb2-lsj-50e_coco_20220504_001756-c9d0c4f2.pth"
+work_dir : "glomerli_cells_swint_300queries_adenomwhatever"
+load_from : "https://download.openmmlab.com/mmdetection/v3.0/mask2former/mask2former_swin-t-p4-w7-224_8xb2-lsj-50e_coco/mask2former_swin-t-p4-w7-224_8xb2-lsj-50e_coco_20220508_091649-01b0f990.pth"
 batch_size : 1
 pretrained : True
 persistent_workers : False
 num_workers : 0
-classes : !!python/tuple ["0", "1", "2", "3"]
-dataroot : "C:/HSA/HSA-Data/projects/074219d0-4345-4896-a335-288f9c7a92ba/dataset/"
-train_ann_file : "annotations/instances_train2017.json"
+classes : !!python/tuple ["Dr\u00fcsengewebe gesund","Adenom", "Karzinom", "3", "4"]
+dataroot : "C:/HSA/HSA-Data/projects/138585a8-68ab-4d7c-8638-ee734a6ce2b1/dataset/"
+train_ann_file : "train.json"
 train_img_prefix:
-  img: train2017/
+  img: images/
   seg: annotations/panoptic_train2017/
 
-val_ann_file : "annotations/instances_val2017.json"
+val_ann_file : "valid.json"
 val_img_prefix:
-  img: val2017/
+  img: images/
   seg: annotations/panoptic_val2017/
 
-test_ann_file : "annotations/instances_val2017.json"
+test_ann_file : "valid.json"
 test_img_prefix:
-  img: val2017/
+  img: images/
   seg: annotations/panoptic_val2017/

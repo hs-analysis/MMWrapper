@@ -36,6 +36,140 @@ def modify_config(cfg, dict_keys):
     return cfg
 
 
+@ConfigModifierRegistry.register("resnet")
+def modify_swin_unet(settings, cfg_path_end="resnet.py"):
+    backend = settings["backend"]
+
+    data_preprocessor = dict(
+        mean=[123.675, 116.28, 103.53] if backend != "tifffile" else None,
+        std=[123.675, 116.28, 103.53] if backend != "tifffile" else None,
+        to_rgb=True if backend != "tifffile" else False,
+    )
+
+    train_dataloader = dict(
+        pin_memory=False,
+        persistent_workers=False,
+        collate_fn=dict(type="default_collate"),
+        batch_size=2,
+        num_workers=0,
+        dataset=dict(
+            type="CustomDataset",
+            data_prefix="C:/Users/philmarq/source/repos/MMWrapperRepo/outputall",
+            with_label=True,
+            pipeline=[
+                dict(type="LoadImageFromFile"),
+                dict(type="RandomResizedCrop", scale=224),
+                dict(type="RandomFlip", prob=0.5, direction="horizontal"),
+                dict(type="PackInputs"),
+            ],
+        ),
+        sampler=dict(type="DefaultSampler", shuffle=True),
+    )
+    val_dataloader = dict(
+        pin_memory=False,
+        persistent_workers=False,
+        collate_fn=dict(type="default_collate"),
+        batch_size=2,
+        num_workers=0,
+        dataset=dict(
+            type="CustomDataset",
+            data_prefix=settings["dataroot"],
+            with_label=True,
+            pipeline=[
+                dict(type="LoadImageFromFile"),
+                dict(type="ResizeEdge", scale=256, edge="short"),
+                dict(type="CenterCrop", crop_size=224),
+                dict(type="PackInputs"),
+            ],
+        ),
+        sampler=dict(type="DefaultSampler", shuffle=True),
+    )
+    val_evaluator = dict(type="Accuracy", topk=(1, 1))
+    test_dataloader = dict(
+        pin_memory=False,
+        persistent_workers=False,
+        collate_fn=dict(type="default_collate"),
+        batch_size=2,
+        num_workers=0,
+        dataset=dict(
+            type="CustomDataset",
+            data_prefix=settings["dataroot"],
+            with_label=True,
+            pipeline=[
+                dict(type="LoadImageFromFile"),
+                dict(type="ResizeEdge", scale=256, edge="short"),
+                dict(type="CenterCrop", crop_size=224),
+                dict(type="PackInputs"),
+            ],
+        ),
+        sampler=dict(type="DefaultSampler", shuffle=True),
+    )
+    test_evaluator = dict(type="Accuracy", topk=(1, 1))
+
+    vis_backends = [
+        dict(type="LocalVisBackend"),  #
+        dict(type="TensorboardVisBackend"),
+    ]
+    visualizer = dict(
+        type="UniversalVisualizer",
+        vis_backends=vis_backends,
+        name="visualizer-" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S"),
+    )
+    swin_dict = {
+        "data_preprocessor": data_preprocessor,
+        "vis_backends": vis_backends,
+        "visualizer": visualizer,
+        "work_dir": settings["work_dir"],
+        "load_from": settings["load_from"],
+        # "log_level": "ERROR",
+        # image_size
+        "num_classes": settings["num_classes"],
+        "data_root": settings["dataroot"],
+        "train_dataloader": train_dataloader,
+        "val_dataloader": val_dataloader,
+        "val_evaluator": val_evaluator,
+        "test_dataloader": test_dataloader,
+        "test_evaluator": test_evaluator,
+        "train_cfg": dict(
+            type="EpochBasedTrainLoop",
+            max_epochs=settings["num_epochs"],
+            val_interval=settings["val_interval"],
+        ),
+        "model.backbone.in_channels": settings["in_channels"],
+        "model.backbone.init_cfg": None,
+        "model.head.num_classes": settings["num_classes"],
+        "param_scheduler": dict(
+            type="CosineAnnealingLR",
+            by_epoch=True,
+            T_max=settings["num_epochs"],
+            convert_to_iter_based=True,
+        ),
+        "log_processor": dict(type="LogProcessor", window_size=50, by_epoch=True),
+        "default_hooks": {
+            "timer": {"type": "IterTimerHook"},
+            "logger": {"type": "LoggerHook", "interval": 50},
+            "param_scheduler": {"type": "ParamSchedulerHook"},
+            "checkpoint": {
+                "type": "CheckpointHook",
+                "interval": settings["checkpoint_interval"],
+                "by_epoch": True,
+                "save_last": True,
+                "max_keep_ckpts": 1,
+                "save_best": "auto",
+            },
+            "sampler_seed": {"type": "DistSamplerSeedHook"},
+            "visualization": {"type": "VisualizationHook"},
+        },
+        # batch augment
+        "log_level": "INFO",
+    }
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+
+    cfg = Config.fromfile(os.path.join(current_dir, f"classification/{cfg_path_end}"))
+    cfg = modify_config(cfg, swin_dict)
+    return cfg
+
+
 @ConfigModifierRegistry.register("swin_unet")
 def modify_swin_unet(cfg, cfg_path_end="swin_unet.py"):
     return modfiy_swin_upper_segmentation(cfg, cfg_path_end)
@@ -733,7 +867,7 @@ def modify_mask2former_config(settings, cfg_path_end="swin_l.py"):
         "visualizer": visualizer,
         "work_dir": settings["work_dir"],
         "load_from": settings["load_from"],
-        "log_level": "ERROR",
+        # "log_level": "ERROR",
         # image_size
         "num_classes": settings["num_classes"],
         "data_root": settings["dataroot"],

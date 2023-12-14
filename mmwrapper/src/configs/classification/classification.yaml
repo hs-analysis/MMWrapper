@@ -1,0 +1,18 @@
+
+model_name : "resnet" #CHANGE THIS
+checkpoint_interval : 1
+keep_checkpoints : 1
+num_classes : 3
+in_channels : 3
+backend: "cv2"
+num_epochs : 300
+image_size : !!python/tuple [1024, 1024] #CHANGE THIS
+val_interval : 1
+resume : None
+work_dir : "testclassification"
+load_from : "https://download.openmmlab.com/mmdetection/v3.0/mask2former/mask2former_swin-t-p4-w7-224_8xb2-lsj-50e_coco/mask2former_swin-t-p4-w7-224_8xb2-lsj-50e_coco_20220508_091649-01b0f990.pth"
+batch_size : 1
+pretrained : True
+persistent_workers : False
+num_workers : 0
+dataroot : "C:/Users/philmarq/source/repos/MMWrapperRepo/outputall/"
