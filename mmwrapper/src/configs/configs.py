@@ -58,7 +58,7 @@ def modify_swin_unet(settings, cfg_path_end="resnet.py"):
             with_label=True,
             pipeline=[
                 dict(type="LoadImageFromFile"),
-                dict(type="RandomResizedCrop", scale=224),
+                dict(type="Resize", scale=settings["image_size"], keep_ratio=False),
                 dict(type="RandomFlip", prob=0.5, direction="horizontal"),
                 dict(type="PackInputs"),
             ],
@@ -77,8 +77,7 @@ def modify_swin_unet(settings, cfg_path_end="resnet.py"):
             with_label=True,
             pipeline=[
                 dict(type="LoadImageFromFile"),
-                dict(type="ResizeEdge", scale=256, edge="short"),
-                dict(type="CenterCrop", crop_size=224),
+                dict(type="Resize", scale=settings["image_size"], keep_ratio=False),
                 dict(type="PackInputs"),
             ],
         ),
@@ -97,8 +96,7 @@ def modify_swin_unet(settings, cfg_path_end="resnet.py"):
             with_label=True,
             pipeline=[
                 dict(type="LoadImageFromFile"),
-                dict(type="ResizeEdge", scale=256, edge="short"),
-                dict(type="CenterCrop", crop_size=224),
+                dict(type="Resize", scale=settings["image_size"], keep_ratio=False),
                 dict(type="PackInputs"),
             ],
         ),
@@ -161,7 +159,7 @@ def modify_swin_unet(settings, cfg_path_end="resnet.py"):
             "visualization": {"type": "VisualizationHook"},
         },
         # batch augment
-        "log_level": "INFO",
+        "log_level": "ERROR",
     }
     current_dir = os.path.dirname(os.path.abspath(__file__))
 
