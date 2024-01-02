@@ -29,7 +29,7 @@ class InferenceModel:
         )
 
         self.is_classification = (
-            Config.frofile(config_file)["default_scope"] == "mmpretrain"
+            Config.fromfile(config_file)["default_scope"] == "mmpretrain"
         )
         print(self.is_classification)
         print(Config.fromfile(config_file)["train_pipeline"][-1])
