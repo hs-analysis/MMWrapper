@@ -41,17 +41,17 @@ tta_pipeline = [
         type="TestTimeAug",
         transforms=[
             [
-                {"type": "Resize", "scale_factor": 0.5, "keep_ratio": True},
-                {"type": "Resize", "scale_factor": 0.75, "keep_ratio": True},
+                # {"type": "Resize", "scale_factor": 0.5, "keep_ratio": True},
+                # {"type": "Resize", "scale_factor": 0.75, "keep_ratio": True},
                 {"type": "Resize", "scale_factor": 1.0, "keep_ratio": True},
-                {"type": "Resize", "scale_factor": 1.25, "keep_ratio": True},
-                {"type": "Resize", "scale_factor": 1.5, "keep_ratio": True},
-                {"type": "Resize", "scale_factor": 1.75, "keep_ratio": True},
+                # {"type": "Resize", "scale_factor": 1.25, "keep_ratio": True},
+                # {"type": "Resize", "scale_factor": 1.5, "keep_ratio": True},
+                # {"type": "Resize", "scale_factor": 1.75, "keep_ratio": True},
             ],
-            [
-                {"type": "RandomFlip", "prob": 0.0, "direction": "horizontal"},
-                {"type": "RandomFlip", "prob": 1.0, "direction": "horizontal"},
-            ],
+            # [
+            #     {"type": "RandomFlip", "prob": 0.0, "direction": "horizontal"},
+            #     {"type": "RandomFlip", "prob": 1.0, "direction": "horizontal"},
+            # ],
             [{"type": "LoadAnnotations"}],
             [{"type": "PackSegInputs"}],
         ],
