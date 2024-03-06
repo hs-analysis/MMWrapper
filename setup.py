@@ -8,14 +8,14 @@ setup(
     description="A wrapper module for mmdetection and mmsegmentation",
     long_description="A wrapper module for mmdetection and mmsegmentation",
     long_description_content_type="text/markdown",
-    url="https://github.com/PhilippMarquardt/MMWrapper",
+    url="https://github.com/hs-analysis/MMWrapper",
     packages=find_packages(),
     classifiers=[],
     keywords="mmwrapper wrapper module",
     python_requires=">=3.6",
     install_requires=[],
     project_urls={
-        "Bug Reports": "https://github.com/PhilippMarquardt/MMWrapper/issues",
-        "Source": "https://github.com/PhilippMarquardt/MMWrapper",
+        "Bug Reports": "https://github.com/hs-analysis/MMWrapper/issues",
+        "Source": "https://github.com/hs-analysis/MMWrapper",
     },
 )

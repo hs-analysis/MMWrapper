@@ -3,10 +3,12 @@ from mmengine import Config
 from mmseg.apis import init_model, inference_model
 from mmdet.apis import init_detector, inference_detector
 from mmpretrain.apis import ImageClassificationInferencer
+
 from mmpretrain.utils.setup_env import register_all_modules as mmpretrainreload
 from mmdet.utils.setup_env import register_all_modules as mmdetreload
 
 # from mmseg.utils.setup_env import register_all_modules as mmsegreload
+
 import yaml
 
 from .configs.configs import ConfigModifierRegistry
