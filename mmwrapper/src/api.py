@@ -4,6 +4,11 @@ from mmseg.apis import init_model, inference_model
 from mmdet.apis import init_detector, inference_detector
 from mmpretrain.apis import ImageClassificationInferencer
 
+from mmpretrain.utils.setup_env import register_all_modules as mmpretrainreload
+from mmdet.utils.setup_env import register_all_modules as mmdetreload
+
+# from mmseg.utils.setup_env import register_all_modules as mmsegreload
+
 import yaml
 
 from .configs.configs import ConfigModifierRegistry
@@ -23,6 +28,10 @@ def get_runner(config_file):
 
 class InferenceModel:
     def __init__(self, checkpoint_file, config_file, device="cuda"):
+
+        mmpretrainreload(True)
+        mmdetreload(True)
+        # mmsegreload(True)
         self.is_detection = (
             Config.fromfile(config_file)["train_pipeline"][-1]["type"]
             == "PackDetInputs"

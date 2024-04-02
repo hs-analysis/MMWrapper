@@ -56,7 +56,10 @@ model = dict(
         num_classes=3,
         norm_cfg=dict(type="SyncBN", requires_grad=True),
         align_corners=False,
-        loss_decode=dict(type="CrossEntropyLoss", use_sigmoid=False, loss_weight=1.0),
+        loss_decode=[
+            dict(type="CrossEntropyLoss", use_sigmoid=False, loss_weight=1.0),
+            dict(type="DiceLoss", loss_name="loss_dice", loss_weight=1.0),
+        ],
     ),
     auxiliary_head=dict(
         type="FCNHead",
@@ -69,7 +72,7 @@ model = dict(
         num_classes=3,
         norm_cfg=dict(type="SyncBN", requires_grad=True),
         align_corners=False,
-        loss_decode=dict(type="CrossEntropyLoss", use_sigmoid=False, loss_weight=0.4),
+        loss_decode=dict(type="CrossEntropyLoss", use_sigmoid=False, loss_weight=0.1),
     ),
     train_cfg=dict(),
     test_cfg=dict(mode="whole"),
@@ -103,17 +106,17 @@ tta_pipeline = [
         type="TestTimeAug",
         transforms=[
             [
-                {"type": "Resize", "scale_factor": 0.5, "keep_ratio": True},
-                {"type": "Resize", "scale_factor": 0.75, "keep_ratio": True},
+                # {"type": "Resize", "scale_factor": 0.5, "keep_ratio": True},
+                # {"type": "Resize", "scale_factor": 0.75, "keep_ratio": True},
                 {"type": "Resize", "scale_factor": 1.0, "keep_ratio": True},
-                {"type": "Resize", "scale_factor": 1.25, "keep_ratio": True},
-                {"type": "Resize", "scale_factor": 1.5, "keep_ratio": True},
-                {"type": "Resize", "scale_factor": 1.75, "keep_ratio": True},
+                # {"type": "Resize", "scale_factor": 1.25, "keep_ratio": True},
+                # {"type": "Resize", "scale_factor": 1.5, "keep_ratio": True},
+                # {"type": "Resize", "scale_factor": 1.75, "keep_ratio": True},
             ],
-            [
-                {"type": "RandomFlip", "prob": 0.0, "direction": "horizontal"},
-                {"type": "RandomFlip", "prob": 1.0, "direction": "horizontal"},
-            ],
+            # [
+            #     {"type": "RandomFlip", "prob": 0.0, "direction": "horizontal"},
+            #     {"type": "RandomFlip", "prob": 1.0, "direction": "horizontal"},
+            # ],
             [{"type": "LoadAnnotations"}],
             [{"type": "PackSegInputs"}],
         ],
