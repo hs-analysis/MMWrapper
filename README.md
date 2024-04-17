@@ -14,4 +14,6 @@ mim install mmengine
 mim install "mmcv>=2.0.0"
 mim install mmdet
 pip install "mmsegmentation>=1.0.0"
+pip install mmpretrain
+pip install ftfy
 pip install git+https://github.com/hs-analysis/MMWrapper.git
