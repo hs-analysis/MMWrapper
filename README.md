@@ -36,42 +36,70 @@ runner.train()
 
 ### Instance Segmentation Config
 ```yaml
-model_name: "maskrcnn_r50"  # CHANGE THIS
-checkpoint_interval: 1
-keep_checkpoints: 1
-num_classes: 3
-in_channels: 3
-backend: "cv2"
-num_epochs: 300  # CHANGE THIS
-image_size: !!python/tuple [512, 512]  # CHANGE THIS
-val_interval: 1
-resume: None
-work_dir: "work_dir"  # CHANGE THIS
+# Configuration for instance segmentation using Mask R-CNN
+model_name: "maskrcnn_r50"  # CHANGE THIS - Model architecture name. can be found in "https://github.com/hs-analysis/MMWrapper/blob/main/mmwrapper/src/configs/configs.py"
+
+# Training parameters
+checkpoint_interval: 1        # Save checkpoint every N epochs
+keep_checkpoints: 1          # Number of checkpoints to keep
+num_classes: 3               # Number of classes to detect/segment
+in_channels: 3               # Number of input image channels (use with RGB images)
+backend: "cv2"               # Image loading backend. Use "tifffile" for fluorescence images with multiple channels
+num_epochs: 300             # CHANGE THIS - Total number of training epochs
+image_size: !!python/tuple [512, 512]  # CHANGE THIS - Size to which all images will be resized
+
+# Validation and checkpointing
+val_interval: 1             # Run validation every N epochs
+resume: None                # Path to checkpoint to resume training from. Supports resuming by providing .pth file of trained model
+work_dir: "work_dir"        # CHANGE THIS - Directory where config.py, weights, and training stats will be saved
+
+# Model initialization
 load_from: "https://download.openmmlab.com/mmdetection/v2.0/mask_rcnn/mask_rcnn_r50_fpn_mstrain-poly_3x_coco/mask_rcnn_r50_fpn_mstrain-poly_3x_coco_20210524_201154-21b550bb.pth"
+# Pre-trained weights path. Find model-specific weights in:
+# https://github.com/open-mmlab/mmdetection/tree/main/configs
+# Choose appropriate weights from the subfolder of your selected model
+
+# Training configuration
 batch_size: 2
 pretrained: True
 persistent_workers: False
 num_workers: 0
+
+# Class definitions
 classes: !!python/tuple ["Drüsengewebe gesund", "Adenom", "Karzinom", "3", "4"]
-dataroot: "path/to/dataset"  # CHANGE THIS
+# IMPORTANT: Class names must exactly match those defined in your COCO annotation file
 
-train_ann_file: "train.json"
+# Dataset configuration
+dataroot: "path/to/dataset"  # CHANGE THIS - Root directory of dataset
+                            # If using HSA KIT export, just set this to the output folder
+
+# Training dataset
+train_ann_file: "train.json"  # COCO format annotation file
 train_img_prefix:
-  img: images/  # CHANGE THIS
-  seg: annotations/panoptic_train2017/
+  img: images/              # CHANGE THIS - Directory containing training images
+  seg: annotations/panoptic_train2017/  # Directory containing segmentation masks
 
+# Validation dataset
 val_ann_file: "valid.json"
 val_img_prefix:
-  img: images/  # CHANGE THIS
+  img: images/              # CHANGE THIS - Directory containing validation images
   seg: annotations/panoptic_val2017/
 
+# Test dataset
 test_ann_file: "valid.json"
 test_img_prefix:
-  img: images/  # CHANGE THIS
+  img: images/              # CHANGE THIS - Directory containing test images
   seg: annotations/panoptic_val2017/
 ```
 
-Note: All important paths that need to be changed are marked with #CHANGE THIS.
+# Notes:
+1. Only train_ann_file and img/ folder paths need to be changed for new datasets
+2. If using HSA KIT export, setting dataroot to the HSA KIT output folder is sufficient
+3. For fluorescence imaging with multiple channels, change backend to "tifffile"
+4. Class names must match exactly with COCO annotation file
+5. Pre-trained weights can be found in model-specific subfolders at:
+    https://github.com/open-mmlab/mmdetection/tree/main/configs
+6. Training can be resumed using resume parameter with path to existing .pth file
 
 ### Segmentation Config
 ```yaml
