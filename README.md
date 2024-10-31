@@ -137,6 +137,7 @@ This supports all architectures supported by the different backends. The only th
 
 ## Inference Examples
 
+
 ### Instance Segmentation
 ```python
 import os
@@ -144,33 +145,48 @@ import numpy as np
 import cv2
 from mmdet.apis import init_detector, inference_detector
 
+"""
+Output format (result.pred_instances):
+- masks: torch.Tensor, shape (N, H, W), bool type, N is number of instances
+- scores: torch.Tensor, shape (N,), float type
+- labels: torch.Tensor, shape (N,), int type
+- bboxes: torch.Tensor, shape (N, 4), float type, format (x1, y1, x2, y2)
+
+Example for single image:
+{
+    'pred_instances': InstanceData(
+        'bboxes': torch.Tensor([[x1, y1, x2, y2], ...]), # shape (N, 4)
+        'labels': torch.Tensor([0, 1, ...]),             # shape (N,)
+        'scores': torch.Tensor([0.9, 0.8, ...]),         # shape (N,)
+        'masks': torch.Tensor([[True, False, ...], ...])  # shape (N, H, W)
+    )
+}
+"""
+
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"  # see issue #152
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
-
 config_file = "path/to/config.py"
 checkpoint_file = "path/to/checkpoint.pth"
 device = 'cuda:0'
-
 model = init_detector(config_file, checkpoint_file, device=device)
 colors = [(255,0,0), (125,0,0), (0,255,0), (50,255,0), (0,25,255), (0,125,0)]
 thresh = 0.75
-
 for file in os.listdir("path/to/images"):
     img_path = os.path.join("path/to/images", file)
     image = cv2.imread(img_path)
     result = inference_detector(model, image)
     
-    masks = result.pred_instances.masks.cpu().numpy()
-    scores = result.pred_instances.scores.cpu().numpy()
-    labels = result.pred_instances.labels.cpu().numpy()
-    bboxes = result.pred_instances.bboxes.cpu().numpy()
+    masks = result.pred_instances.masks.cpu().numpy()     # shape (N, H, W)
+    scores = result.pred_instances.scores.cpu().numpy()   # shape (N,)
+    labels = result.pred_instances.labels.cpu().numpy()   # shape (N,)
+    bboxes = result.pred_instances.bboxes.cpu().numpy()   # shape (N, 4)
     
     for mask, score, label, bbox in zip(masks, scores, labels, bboxes):
         if score > thresh:
             color = colors[label]
             if label == 0:  # For label == 0, draw contours
                 mask = mask.astype(np.uint8)
-                contours, _ = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+                contours, * = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
                 cv2.drawContours(image, contours, -1, color, 1)
             
             x1, y1, x2, y2 = bbox.astype(np.int32)
@@ -186,25 +202,38 @@ import numpy as np
 import cv2
 from mmdet.apis import init_detector, inference_detector
 
+"""
+Output format (result.pred_instances):
+- scores: torch.Tensor, shape (N,), float type
+- labels: torch.Tensor, shape (N,), int type
+- bboxes: torch.Tensor, shape (N, 4), float type, format (x1, y1, x2, y2)
+
+Example for single image:
+{
+    'pred_instances': InstanceData(
+        'bboxes': torch.Tensor([[x1, y1, x2, y2], ...]), # shape (N, 4)
+        'labels': torch.Tensor([0, 1, ...]),             # shape (N,)
+        'scores': torch.Tensor([0.9, 0.8, ...])          # shape (N,)
+    )
+}
+"""
+
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
-
 config_file = "path/to/config.py"
 checkpoint_file = "path/to/checkpoint.pth"
 device = 'cuda:0'
-
 model = init_detector(config_file, checkpoint_file, device=device)
 colors = [(255,0,0), (125,0,0), (0,255,0), (50,255,0), (0,25,255), (0,125,0)]
 thresh = 0.35
-
 for file in os.listdir("path/to/images"):
     img_path = os.path.join("path/to/images", file)
     image = cv2.imread(img_path)
     result = inference_detector(model, image)
     
-    scores = result.pred_instances.scores.cpu().numpy()
-    labels = result.pred_instances.labels.cpu().numpy()
-    bboxes = result.pred_instances.bboxes.cpu().numpy()
+    scores = result.pred_instances.scores.cpu().numpy()   # shape (N,)
+    labels = result.pred_instances.labels.cpu().numpy()   # shape (N,)
+    bboxes = result.pred_instances.bboxes.cpu().numpy()   # shape (N, 4)
     
     for score, label, bbox in zip(scores, labels, bboxes):
         if score > thresh:
@@ -222,18 +251,31 @@ import cv2
 import torch
 from mmseg.apis import init_model, inference_model
 
+"""
+Output format (result):
+- seg_logits: torch.Tensor, shape (C, H, W), float type, raw logits
+- pred_sem_seg: torch.Tensor, shape (1, H, W), int type, predicted class indices
+where:
+- C is number of classes
+- H, W are height and width of input image
+
+Example for single image:
+{
+    'seg_logits': torch.Tensor([[[0.1, 0.2...], ...]])   # shape (C, H, W)
+    'pred_sem_seg': torch.Tensor([[[0, 1, ...]]])        # shape (1, H, W)
+}
+"""
+
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
 os.environ["CUDA_VISIBLE_DEVICES"] = "1"
-
 config_path = "path/to/config.py"
 checkpoint_path = "path/to/checkpoint.pth"
 model = init_model(config_path, checkpoint_path)
-
 img = cv2.imread("path/to/image.jpg")
 result = inference_model(model, img)
-logits = result.seg_logits.data
-logits = torch.argmax(logits, dim=0).unsqueeze(0)
-pred_mask = (result.pred_sem_seg.data.permute(1,2,0).cpu().numpy() + 0) * 50.
+logits = result.seg_logits.data                          # shape (C, H, W)
+logits = torch.argmax(logits, dim=0).unsqueeze(0)       # shape (1, H, W)
+pred_mask = (result.pred_sem_seg.data.permute(1,2,0).cpu().numpy() + 0) * 50.  # shape (H, W, 1)
 cv2.imwrite("output.png", pred_mask)
 ```
 
@@ -244,16 +286,31 @@ import numpy as np
 import cv2
 from mmpretrain.apis import ImageClassificationInferencer
 
+"""
+Output format (list of dict, one per image):
+[{
+    'pred_scores': numpy.ndarray,  # shape (num_classes,), probabilities for each class
+    'pred_label': int,            # single integer indicating predicted class
+    'pred_score': float,          # confidence score for predicted class
+    'pred_class': str             # class name string
+}]
+
+Example:
+[{
+    'pred_scores': array([0.1, 0.2, ...]),  # shape (num_classes,)
+    'pred_label': 65,
+    'pred_score': 0.6649367809295654,
+    'pred_class': 'sea snake'
+}]
+"""
+
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
 os.environ["CUDA_VISIBLE_DEVICES"] = "1"
-
 config_file = "path/to/config.py"
 checkpoint_file = "path/to/checkpoint.pth"
 device = 'cuda:0'
-
 model = ImageClassificationInferencer(config_file, checkpoint_file, device=device)
-
 for file in os.listdir("path/to/images"):
     img_path = os.path.join("path/to/images", file)
-    result = model(img_path)
+    result = model(img_path)  # returns list of dicts, one per image
 ```
