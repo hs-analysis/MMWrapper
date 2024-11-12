@@ -17,11 +17,12 @@ By using these different backends we have sophisticated and tested backend.
 pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu117
 pip install -U openmim
 mim install mmengine
-mim install "mmcv>=2.0.0"
+mim install "mmcv==2.0.0"
 mim install mmdet
 pip install "mmsegmentation>=1.0.0"
 pip install mmpretrain==1.0.0
 pip install ftfy==6.2.0
+pip install future tensorboard
 pip install git+https://github.com/hs-analysis/MMWrapper.git
 ```
 
