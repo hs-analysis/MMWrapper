@@ -9,13 +9,13 @@ num_epochs : 300 #change
 image_size : !!python/tuple [512, 512] #CHANGE THIS
 val_interval : 1
 resume : None
-work_dir : "jakobtest" #change
-load_from : "https://download.openmmlab.com/mmdetection/v2.0/mask_rcnn/mask_rcnn_r50_fpn_mstrain-poly_3x_coco/mask_rcnn_r50_fpn_mstrain-poly_3x_coco_20210524_201154-21b550bb.pth"
+work_dir : "your_save_dir" #change
+load_from : "https://download.openmmlab.com/mmdetection/v3.0/mask2former/mask2former_swin-s-p4-w7-224_8xb2-lsj-50e_coco/mask2former_swin-s-p4-w7-224_8xb2-lsj-50e_coco_20220504_001756-c9d0c4f2.pth"
 batch_size : 2
 pretrained : True
 persistent_workers : False
 num_workers : 0
-classes : !!python/tuple ["Dr\u00fcsengewebe gesund","Adenom", "Karzinom", "3", "4"]
+classes : ["Dr\u00fcsengewebe gesund","Adenom", "Karzinom", "3", "4"]
 dataroot : "C:/HSA/HSA-Data/projects/138585a8-68ab-4d7c-8638-ee734a6ce2b1/dataset/" #change
 train_ann_file : "train.json"
 train_img_prefix:
