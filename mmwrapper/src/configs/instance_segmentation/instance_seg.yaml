@@ -1,5 +1,5 @@
 
-model_name : "maskrcnn_r50" #CHANGE THIS
+model_name : "mask2former_swin_s" #CHANGE THIS
 checkpoint_interval : 1
 keep_checkpoints : 1
 num_classes : 3
