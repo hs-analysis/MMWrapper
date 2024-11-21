@@ -213,10 +213,10 @@ for file in os.listdir("path/to/images"):
     for mask, score, label, bbox in zip(masks, scores, labels, bboxes):
         if score > thresh:
             color = colors[label]
-            if label == 0:  # For label == 0, draw contours
-                mask = mask.astype(np.uint8)
-                contours, * = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-                cv2.drawContours(image, contours, -1, color, 1)
+           
+            mask = mask.astype(np.uint8)
+            contours, * = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+            cv2.drawContours(image, contours, -1, color, 1)
             
             x1, y1, x2, y2 = bbox.astype(np.int32)
             cv2.rectangle(image, (x1, y1), (x2, y2), color, 1)
