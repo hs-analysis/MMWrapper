@@ -38,7 +38,7 @@ runner.train()
 ### Instance Segmentation Config
 ```yaml
 # Configuration for instance segmentation using Mask R-CNN
-model_name: "maskrcnn_r50"  # CHANGE THIS - Model architecture name. can be found in "https://github.com/hs-analysis/MMWrapper/blob/main/mmwrapper/src/configs/configs.py"
+model_name: "mask2former_swin_s"  # CHANGE THIS - Model architecture name. can be found in "https://github.com/hs-analysis/MMWrapper/blob/main/mmwrapper/src/configs/configs.py"
 
 # Training parameters
 checkpoint_interval: 1        # Save checkpoint every N epochs
